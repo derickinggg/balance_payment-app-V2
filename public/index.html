@@ -101,6 +101,28 @@
     let cardFieldsInstance = null;
     let clientToken = null;
 
+    // Persist credentials locally for convenience (not secure; for demo only)
+    function persistCreds(){
+      try{
+        localStorage.setItem('pp_env', document.getElementById('env').value);
+        localStorage.setItem('pp_clientId', document.getElementById('clientId').value.trim());
+        localStorage.setItem('pp_clientSecret', document.getElementById('clientSecret').value.trim());
+      }catch(_){/* ignore */}
+    }
+    function restoreCreds(){
+      try{
+        const env = localStorage.getItem('pp_env');
+        const id = localStorage.getItem('pp_clientId');
+        const sec = localStorage.getItem('pp_clientSecret');
+        if(env) document.getElementById('env').value = env;
+        if(id) document.getElementById('clientId').value = id;
+        if(sec) document.getElementById('clientSecret').value = sec;
+      }catch(_){/* ignore */}
+    }
+
+    // Restore credentials on load
+    restoreCreds();
+
     function tabTo(name){
       document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
       document.getElementById('checkout').style.display = name==='checkout' ? '' : 'none';
@@ -159,11 +181,17 @@
       cardFieldsInstance.CVVField().render('#card-cvv-field');
     }
 
+    // Save creds whenever user types or changes env
+    document.getElementById('env').addEventListener('change', persistCreds);
+    document.getElementById('clientId').addEventListener('input', persistCreds);
+    document.getElementById('clientSecret').addEventListener('input', persistCreds);
+
     document.getElementById('validate').addEventListener('click', async ()=>{
       try{
         const clientId = document.getElementById('clientId').value.trim();
         const clientSecret = document.getElementById('clientSecret').value.trim();
         const env = document.getElementById('env').value;
+        persistCreds();
         if(!clientId || !clientSecret){ showCheckout('Enter Client ID and Secret'); return; }
         const token = await post('/api/client-token', { clientId, clientSecret, env });
         clientToken = token.client_token;
@@ -199,6 +227,7 @@
       const clientId = document.getElementById('clientId').value.trim();
       const clientSecret = document.getElementById('clientSecret').value.trim();
       const env = document.getElementById('env').value;
+      persistCreds();
       try{
         const data = await post('/api/balance/current', { clientId, clientSecret, env });
         if (data?.balances) {
@@ -219,6 +248,7 @@
       const clientSecret = document.getElementById('clientSecret').value.trim();
       const env = document.getElementById('env').value;
       const days = document.getElementById('days').value;
+      persistCreds();
       try{
         const data = await post('/api/balance/transactions', { clientId, clientSecret, env, days });
         renderTxList(data);
