@@ -188,7 +188,15 @@
       try{
         // Try to find useful fields from capture response
         const status = obj.status || obj.result?.status || '—';
+        const statusUpper = String(status || '').toUpperCase();
         const capture = obj?.purchase_units?.[0]?.payments?.captures?.[0] || obj?.result?.purchase_units?.[0]?.payments?.captures?.[0] || null;
+        const captureStatusUpper = String(capture?.status || '').toUpperCase();
+        const derivedStatus = captureStatusUpper || statusUpper || '—';
+        // Normalize to APPROVED/DECLINED for display
+        const isApproved = ['COMPLETED','CAPTURED','APPROVED','SUCCEEDED','SUCCESS'].includes(derivedStatus);
+        const isDeclined = ['DECLINED','FAILED','DENIED'].includes(derivedStatus);
+        const displayStatus = isApproved ? 'APPROVED' : (isDeclined ? 'DECLINED' : derivedStatus);
+
         const amount = capture?.amount?.value || obj?.purchase_units?.[0]?.amount?.value || '—';
         const currency = capture?.amount?.currency_code || obj?.purchase_units?.[0]?.amount?.currency_code || 'USD';
         const orderId = obj?.id || obj?.result?.id || capture?.id || '—';
@@ -199,9 +207,8 @@
         const bank = card?.bin_details?.issuing_bank || '—';
         const country = card?.bin_details?.bin_country_code || '—';
 
-        const ok = (status === 'COMPLETED' || status === 'APPROVED' || status === 'CAPTURED');
-        const badge = ok ? '<span class="badge ok">COMPLETED</span>' : `<span class="badge err">${status}</span>`;
-        const statusField = ok ? '<span class="status-ok">Success</span>' : '<span class="status-err">Failed</span>';
+        const badge = isApproved ? '<span class="badge ok">APPROVED</span>' : `<span class="badge err">${displayStatus}</span>`;
+        const statusField = isApproved ? '<span class="status-ok">APPROVED</span>' : `<span class="status-err">${displayStatus}</span>`;
 
         mount.innerHTML = `
           <div class="result-card">
