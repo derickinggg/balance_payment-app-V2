@@ -42,6 +42,19 @@
     .tx-meta{color:#a5b0d6;font-size:12px}
     .tx-id{opacity:.9}
     .tx-right{font-size:16px}
+    /* Checkout result card */
+    .result-card{background:#0e1430;border:1px solid #1f2747;border-radius:14px;padding:16px;margin-top:12px}
+    .result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .result-title{font-weight:600;color:#e8edff}
+    .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600}
+    .badge.ok{background:#12381f;color:#22c55e;border:1px solid #1e7a3a}
+    .badge.err{background:#3a1212;color:#ef4444;border:1px solid #8a1a1a}
+    .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 12px}
+    .kv label{opacity:.75;font-size:12px}
+    .kv div{color:#e8edff}
+    .raw{margin-top:12px}
+    .raw summary{cursor:pointer;color:#a5b0d6}
+    .raw pre{white-space:pre-wrap;background:#0a0f24;border:1px solid #1f2747;border-radius:10px;padding:12px;margin:8px 0 0 0}
   </style>
 </head>
 <body>
@@ -165,7 +178,55 @@
     }
 
     function showCheckout(obj){
-      document.getElementById('checkout-result').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj,null,2);
+      const mount = document.getElementById('checkout-result');
+      if (!obj || typeof obj !== 'object') {
+        mount.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj,null,2);
+        return;
+      }
+      try{
+        // Try to find useful fields from capture response
+        const status = obj.status || obj.result?.status || '—';
+        const capture = obj?.purchase_units?.[0]?.payments?.captures?.[0] || obj?.result?.purchase_units?.[0]?.payments?.captures?.[0] || null;
+        const amount = capture?.amount?.value || obj?.purchase_units?.[0]?.amount?.value || '—';
+        const currency = capture?.amount?.currency_code || obj?.purchase_units?.[0]?.amount?.currency_code || 'USD';
+        const orderId = obj?.id || obj?.result?.id || capture?.id || '—';
+        const card = obj?.payment_source?.card || obj?.result?.payment_source?.card || {};
+        const brand = card?.brand || '—';
+        const last4 = card?.last_digits || '—';
+        const expiry = card?.expiry || '—';
+        const bank = card?.bin_details?.issuing_bank || '—';
+        const country = card?.bin_details?.bin_country_code || '—';
+
+        const ok = (status === 'COMPLETED' || status === 'APPROVED' || status === 'CAPTURED');
+        const badge = ok ? '<span class="badge ok">COMPLETED</span>' : `<span class="badge err">${status}</span>`;
+
+        mount.innerHTML = `
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-title">Payment Summary</div>
+              ${badge}
+            </div>
+            <div class="kv">
+              <label>Order ID</label><div>${orderId}</div>
+              <label>Amount</label><div><span class="tx-amount">$${Number(amount).toFixed(2)} ${currency}</span></div>
+              <label>Card</label><div>${brand} •••• ${last4}</div>
+              <label>Expiry</label><div>${expiry}</div>
+              <label>Issuing Bank</label><div>${bank}</div>
+              <label>Country</label><div>${country}</div>
+            </div>
+            <details class="raw">
+              <summary>View raw response</summary>
+              <pre>${escapeHtml(JSON.stringify(obj, null, 2))}</pre>
+            </details>
+          </div>
+        `;
+      }catch(e){
+        mount.textContent = JSON.stringify(obj, null, 2);
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
 
     async function loadSDK(clientId, currency='USD', clientToken){
