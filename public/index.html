@@ -31,6 +31,17 @@
     .tx-debit{color:#ef4444}
     /* Current balance amount emphasis */
     #current-balance .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:700;font-size:16px;opacity:1}
+    /* Section title */
+    .section-title{display:flex;align-items:center;gap:8px;font-weight:600;margin:8px 0 6px 0;color:#c8d3ff}
+    .section-title svg{width:16px;height:16px;opacity:.8}
+    /* Transaction cards */
+    .tx-list{display:flex;flex-direction:column;gap:12px}
+    .tx-card{background:#0e1430;border:1px solid #1f2747;border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+    .tx-left{display:flex;flex-direction:column;gap:6px}
+    .tx-title{font-weight:600;color:#e8edff}
+    .tx-meta{color:#a5b0d6;font-size:12px}
+    .tx-id{opacity:.9}
+    .tx-right{font-size:16px}
   </style>
 </head>
 <body>
@@ -102,7 +113,11 @@
           <div id="current-balance" class="muted"></div>
         </div>
         <div style="grid-column:1/-1">
-          <div id="tx-list"></div>
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5 0 .34-.03.67-.1 1h2.02c.05-.33.08-.66.08-1 0-3.87-3.13-7-7-7Zm-5 5c0-.34.03-.67.1-1H5.08c-.05.33-.08.66-.08 1 0 3.87 3.13 7 7 7v3l4-4-4-4v3c-2.76 0-5-2.24-5-5Z" fill="#9fb0ff"/></svg>
+            Recent Transactions
+          </div>
+          <div id="tx-list" class="tx-list"></div>
         </div>
       </div>
     </div>
@@ -224,17 +239,26 @@
     function fmt(n){ return typeof n === 'number' ? n.toFixed(2) : n; }
     function renderTxList(data){
       const list = data?.transaction_details || [];
-      const html = ['<div class="muted">Most recent transactions</div>']
-        .concat(list.slice(0,10).map(t=>{
-          const info = t.transaction_info || {}; const payer = t.payer_info || {}; const amt = info.transaction_amount || {}; 
-          const code = info.transaction_event_code || '';
-          const isCredit = (code === 'T0006' || code === 'T0001');
-          const cls = isCredit ? 'tx-amount tx-credit' : 'tx-amount tx-debit';
-          return `<div style="padding:8px;border:1px solid #223; border-radius:8px; margin-top:8px">`
-            + `<div><b>${code}</b> — <span class="${cls}">${amt.value||''} ${amt.currency_code||''}</span></div>`
-            + `<div class="muted">${info.transaction_initiation_date||''} — ${payer.email_address||''}</div>`
-            + `</div>`;
-        }));
+      const html = list.slice(0,10).map(t=>{
+        const info = t.transaction_info || {}; const payer = t.payer_info || {}; const amt = info.transaction_amount || {}; 
+        const code = info.transaction_event_code || '';
+        const isCredit = (code === 'T0006' || code === 'T0001');
+        const cls = isCredit ? 'tx-amount tx-credit' : 'tx-amount tx-debit';
+        const sign = isCredit ? '+' : '-';
+        const value = typeof amt.value !== 'undefined' ? Number(amt.value).toFixed(2) : '';
+        const currency = amt.currency_code || '';
+        const title = isCredit ? 'Payment Received' : 'Transaction';
+        const when = info.transaction_initiation_date ? new Date(info.transaction_initiation_date).toLocaleString() : '';
+        const id = info.transaction_id || info.paypal_reference_id || '';
+        return `<div class="tx-card">`
+          + `<div class="tx-left">`
+          +   `<div class="tx-title">${title}</div>`
+          +   `<div class="tx-meta">${when}</div>`
+          +   `<div class="tx-meta tx-id">ID: ${id}</div>`
+          + `</div>`
+          + `<div class="tx-right ${cls}">${sign}$${value}</div>`
+        + `</div>`;
+      });
       document.getElementById('tx-list').innerHTML = html.join('');
     }
 
