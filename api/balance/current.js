@@ -1,4 +1,4 @@
-import { fetchCurrentBalance } from '../src/paypal.js';
+import { fetchCurrentBalance } from '../../src/paypal.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
