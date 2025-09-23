@@ -55,6 +55,8 @@
     .raw{margin-top:12px}
     .raw summary{cursor:pointer;color:#a5b0d6}
     .raw pre{white-space:pre-wrap;background:#0a0f24;border:1px solid #1f2747;border-radius:10px;padding:12px;margin:8px 0 0 0}
+    .status-ok{color:#22c55e;font-weight:700}
+    .status-err{color:#ef4444;font-weight:700}
   </style>
 </head>
 <body>
@@ -199,6 +201,7 @@
 
         const ok = (status === 'COMPLETED' || status === 'APPROVED' || status === 'CAPTURED');
         const badge = ok ? '<span class="badge ok">COMPLETED</span>' : `<span class="badge err">${status}</span>`;
+        const statusField = ok ? '<span class="status-ok">Success</span>' : '<span class="status-err">Failed</span>';
 
         mount.innerHTML = `
           <div class="result-card">
@@ -207,6 +210,7 @@
               ${badge}
             </div>
             <div class="kv">
+              <label>Status</label><div>${statusField}</div>
               <label>Order ID</label><div>${orderId}</div>
               <label>Amount</label><div><span class="tx-amount">$${Number(amount).toFixed(2)} ${currency}</span></div>
               <label>Card</label><div>${brand} •••• ${last4}</div>
