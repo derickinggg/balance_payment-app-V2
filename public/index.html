@@ -27,6 +27,8 @@
     .amount,.tab,button,input,select{font-feature-settings:'cv05' 1,'tnum' 1,'ss01' 1}
     /* Transaction list monospace for amounts */
     .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:600}
+    /* Current balance amount emphasis */
+    #current-balance .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:700;font-size:16px;opacity:1}
   </style>
 </head>
 <body>
@@ -242,9 +244,9 @@
           const primary = (data.balances||[]).find(b=>b.primary) || data.balances[0];
           const val = primary?.total_balance?.value || primary?.available_balance?.value || '0.00';
           const cur = primary?.total_balance?.currency_code || primary?.currency_code || 'USD';
-          document.getElementById('current-balance').textContent = `Current balance: ${val} ${cur}`;
+          document.getElementById('current-balance').innerHTML = `Current balance: <span class="tx-amount">${val} ${cur}</span>`;
         } else if (data?.balance) {
-          document.getElementById('current-balance').textContent = `Derived balance: ${data.balance} ${data.currency||'USD'}`;
+          document.getElementById('current-balance').innerHTML = `Derived balance: <span class=\"tx-amount\">${data.balance} ${data.currency||'USD'}</span>`;
         } else {
           document.getElementById('current-balance').textContent = JSON.stringify(data);
         }
