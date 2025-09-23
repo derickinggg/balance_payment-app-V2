@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+// Use global fetch available in Node 18+ and Vercel runtimes
 
 export function baseForEnv(env) {
   const e = (env || 'sandbox').toLowerCase();
