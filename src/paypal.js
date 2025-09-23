@@ -51,7 +51,6 @@ export async function createOrderServer({ value = '1.00', currency_code = 'USD',
   const payload = {
     intent: 'CAPTURE',
     purchase_units: [ { amount: { currency_code, value } } ],
-    payment_source: { card: { attributes: { vault: false } } },
   };
   const response = await fetch(`${base}/v2/checkout/orders`, {
     method: 'POST',
