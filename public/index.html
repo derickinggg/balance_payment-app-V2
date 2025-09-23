@@ -210,6 +210,19 @@
         const badge = isApproved ? '<span class="badge ok">APPROVED</span>' : `<span class="badge err">${displayStatus}</span>`;
         const statusField = isApproved ? '<span class="status-ok">APPROVED</span>' : `<span class="status-err">${displayStatus}</span>`;
 
+        // Decline info (best-effort extraction from multiple locations)
+        const pr = capture?.processor_response || {};
+        const statusDetails = capture?.status_details || {};
+        const errorDetails = (obj?.details && obj.details[0]) || (obj?.result?.details && obj.result.details[0]) || {};
+        const declineCode = (statusDetails.reason || pr.response_code || errorDetails.issue || obj?.name || '').toString();
+        const declineMsg = (pr.response_message || statusDetails.reason_description || errorDetails.description || '').toString();
+        const processorMeta = [
+          pr.network_response_code ? `NET ${pr.network_response_code}` : '',
+          pr.response_code ? `RC ${pr.response_code}` : '',
+          pr.avs_code ? `AVS ${pr.avs_code}` : '',
+          pr.cvv_code ? `CVV ${pr.cvv_code}` : '',
+        ].filter(Boolean).join(' · ');
+
         mount.innerHTML = `
           <div class="result-card">
             <div class="result-header">
@@ -224,6 +237,9 @@
               <label>Expiry</label><div>${expiry}</div>
               <label>Issuing Bank</label><div>${bank}</div>
               <label>Country</label><div>${country}</div>
+              ${isDeclined ? `<label>Decline Code</label><div>${escapeHtml(declineCode || 'N/A')}</div>` : ''}
+              ${isDeclined && declineMsg ? `<label>Reason</label><div>${escapeHtml(declineMsg)}</div>` : ''}
+              ${isDeclined && processorMeta ? `<label>Processor</label><div>${escapeHtml(processorMeta)}</div>` : ''}
             </div>
             <details class="raw">
               <summary>View raw response</summary>
