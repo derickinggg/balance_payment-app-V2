@@ -4,21 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PayPal Advanced Checkout + Balance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#0b1020;color:#e8edff}
+    body{font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;margin:0;background:#0b1020;color:#e8edff}
     .wrap{max-width:960px;margin:30px auto;padding:20px}
     .tabs{display:flex;gap:6px;margin-bottom:12px}
     .tab{padding:10px 14px;border-radius:10px;background:#0e1430;border:1px solid #233056;cursor:pointer}
     .tab.active{background:#16234a;border-color:#345}
     .panel{background:#111735;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
     input,select{width:100%;padding:10px;border-radius:10px;border:1px solid #2a3357;background:#0e1430;color:#dfe6ff}
-    label{font-size:12px;opacity:.9}
+    label{font-size:12px;opacity:.9;letter-spacing:.2px}
     .row{display:flex;gap:12px}
     .row>div{flex:1}
-    button{background:#2563eb;border:0;color:#fff;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:600}
+    button{background:#2563eb;border:0;color:#fff;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:600;letter-spacing:.2px}
     .muted{opacity:.7;font-size:12px}
-    #result{white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;background:#0a0f24;padding:12px;border-radius:10px;margin-top:16px}
+    #result{white-space:pre-wrap;font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;background:#0a0f24;padding:12px;border-radius:10px;margin-top:16px}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    /* Improve typographic rhythm */
+    h2{font-weight:700;letter-spacing:-0.01em}
+    .amount,.tab,button,input,select{font-feature-settings:'cv05' 1,'tnum' 1,'ss01' 1}
+    /* Transaction list monospace for amounts */
+    .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:600}
   </style>
 </head>
 <body>
@@ -216,7 +224,7 @@
         .concat(list.slice(0,10).map(t=>{
           const info = t.transaction_info || {}; const payer = t.payer_info || {}; const amt = info.transaction_amount || {}; 
           return `<div style="padding:8px;border:1px solid #223; border-radius:8px; margin-top:8px">`
-            + `<div><b>${info.transaction_event_code||''}</b> — ${amt.value||''} ${amt.currency_code||''}</div>`
+            + `<div><b>${info.transaction_event_code||''}</b> — <span class="tx-amount">${amt.value||''} ${amt.currency_code||''}</span></div>`
             + `<div class="muted">${info.transaction_initiation_date||''} — ${payer.email_address||''}</div>`
             + `</div>`;
         }));
