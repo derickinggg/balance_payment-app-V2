@@ -27,6 +27,8 @@
     .amount,.tab,button,input,select{font-feature-settings:'cv05' 1,'tnum' 1,'ss01' 1}
     /* Transaction list monospace for amounts */
     .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:600}
+    .tx-credit{color:#22c55e}
+    .tx-debit{color:#ef4444}
     /* Current balance amount emphasis */
     #current-balance .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:700;font-size:16px;opacity:1}
   </style>
@@ -225,8 +227,11 @@
       const html = ['<div class="muted">Most recent transactions</div>']
         .concat(list.slice(0,10).map(t=>{
           const info = t.transaction_info || {}; const payer = t.payer_info || {}; const amt = info.transaction_amount || {}; 
+          const code = info.transaction_event_code || '';
+          const isCredit = (code === 'T0006' || code === 'T0001');
+          const cls = isCredit ? 'tx-amount tx-credit' : 'tx-amount tx-debit';
           return `<div style="padding:8px;border:1px solid #223; border-radius:8px; margin-top:8px">`
-            + `<div><b>${info.transaction_event_code||''}</b> — <span class="tx-amount">${amt.value||''} ${amt.currency_code||''}</span></div>`
+            + `<div><b>${code}</b> — <span class="${cls}">${amt.value||''} ${amt.currency_code||''}</span></div>`
             + `<div class="muted">${info.transaction_initiation_date||''} — ${payer.email_address||''}</div>`
             + `</div>`;
         }));
