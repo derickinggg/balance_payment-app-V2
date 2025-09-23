@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayPal Advanced Checkout + Balance</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#0b1020;color:#e8edff}
+    .wrap{max-width:960px;margin:30px auto;padding:20px}
+    .tabs{display:flex;gap:6px;margin-bottom:12px}
+    .tab{padding:10px 14px;border-radius:10px;background:#0e1430;border:1px solid #233056;cursor:pointer}
+    .tab.active{background:#16234a;border-color:#345}
+    .panel{background:#111735;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    input,select{width:100%;padding:10px;border-radius:10px;border:1px solid #2a3357;background:#0e1430;color:#dfe6ff}
+    label{font-size:12px;opacity:.9}
+    .row{display:flex;gap:12px}
+    .row>div{flex:1}
+    button{background:#2563eb;border:0;color:#fff;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:600}
+    .muted{opacity:.7;font-size:12px}
+    #result{white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;background:#0a0f24;padding:12px;border-radius:10px;margin-top:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>PayPal Tools</h2>
+    <p class="muted">Paste your PayPal app credentials below. Credentials are only used for your requests.</p>
+
+    <div class="panel" style="margin-bottom:12px">
+      <div class="row">
+        <div>
+          <label>Environment</label>
+          <select id="env">
+            <option value="sandbox">Sandbox</option>
+            <option value="live">Live</option>
+          </select>
+        </div>
+        <div>
+          <label>PayPal Client ID</label>
+          <input id="clientId" placeholder="A..." />
+        </div>
+        <div>
+          <label>PayPal Client Secret</label>
+          <input id="clientSecret" placeholder="E..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="checkout">Checkout</div>
+      <div class="tab" data-tab="balance">Balance</div>
+    </div>
+
+    <div id="checkout" class="panel">
+      <div class="row">
+        <div>
+          <label>Amount</label>
+          <input id="amount" value="1.00" />
+        </div>
+        <div style="align-self:flex-end">
+          <button id="validate">Validate API</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div id="card-name-field"></div>
+        <div id="card-number-field" style="margin-top:12px"></div>
+        <div class="row" style="margin-top:12px">
+          <div id="card-expiry-field"></div>
+          <div id="card-cvv-field"></div>
+        </div>
+        <button id="pay" style="margin-top:12px">Pay</button>
+      </div>
+      <div id="checkout-result" style="margin-top:12px"></div>
+    </div>
+
+    <div id="balance" class="panel" style="display:none">
+      <div class="row">
+        <div>
+          <label>Lookback days</label>
+          <input id="days" value="7" />
+        </div>
+        <div style="align-self:flex-end" class="row">
+          <button id="get-current">Get Current Balance</button>
+          <button id="list-tx">List Recent Transactions</button>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div id="current-balance" class="muted"></div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div id="tx-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let cardFieldsInstance = null;
+    let clientToken = null;
+
+    function tabTo(name){
+      document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+      document.getElementById('checkout').style.display = name==='checkout' ? '' : 'none';
+      document.getElementById('balance').style.display = name==='balance' ? '' : 'none';
+    }
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>tabTo(t.dataset.tab)));
+
+    async function post(url, body){
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || JSON.stringify(data));
+      return data;
+    }
+
+    function showCheckout(obj){
+      document.getElementById('checkout-result').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj,null,2);
+    }
+
+    async function loadSDK(clientId, currency='USD', clientToken){
+      const existing = document.getElementById('pp-sdk');
+      if(existing) existing.remove();
+      await new Promise((resolve)=>{
+        const s = document.createElement('script');
+        s.id = 'pp-sdk';
+        s.src = `https://www.paypal.com/sdk/js?components=card-fields&client-id=${encodeURIComponent(clientId)}&currency=${currency}&intent=capture&commit=true`;
+        if (clientToken) s.setAttribute('data-client-token', clientToken);
+        s.onload = ()=> resolve();
+        s.onerror = ()=> resolve();
+        document.head.appendChild(s);
+      });
+    }
+
+    async function renderCardFields(){
+      if(!window.paypal || !paypal.CardFields){ showCheckout('SDK not loaded'); return; }
+      cardFieldsInstance = paypal.CardFields({
+        createOrder: async () => {
+          const amount = document.getElementById('amount').value || '1.00';
+          const clientId = document.getElementById('clientId').value.trim();
+          const clientSecret = document.getElementById('clientSecret').value.trim();
+          const env = document.getElementById('env').value;
+          const order = await post('/api/orders', { amount, clientId, clientSecret, env });
+          return order.id;
+        },
+        onApprove: async (data) => {
+          const clientId = document.getElementById('clientId').value.trim();
+          const clientSecret = document.getElementById('clientSecret').value.trim();
+          const env = document.getElementById('env').value;
+          const capture = await post(`/api/orders/${data.orderID}/capture`, { clientId, clientSecret, env });
+          showCheckout(capture);
+        },
+        onError: (err)=> showCheckout(err?.message || String(err)),
+      });
+      cardFieldsInstance.NameField().render('#card-name-field');
+      cardFieldsInstance.NumberField().render('#card-number-field');
+      cardFieldsInstance.ExpiryField().render('#card-expiry-field');
+      cardFieldsInstance.CVVField().render('#card-cvv-field');
+    }
+
+    document.getElementById('validate').addEventListener('click', async ()=>{
+      try{
+        const clientId = document.getElementById('clientId').value.trim();
+        const clientSecret = document.getElementById('clientSecret').value.trim();
+        const env = document.getElementById('env').value;
+        if(!clientId || !clientSecret){ showCheckout('Enter Client ID and Secret'); return; }
+        const token = await post('/api/client-token', { clientId, clientSecret, env });
+        clientToken = token.client_token;
+        await loadSDK(clientId, 'USD', clientToken);
+        showCheckout('Validated. SDK loaded.');
+        await renderCardFields();
+      }catch(e){ showCheckout(e.message); }
+    });
+
+    document.getElementById('pay').addEventListener('click', async ()=>{
+      try{
+        if(!cardFieldsInstance){ showCheckout('Validate first to render fields.'); return; }
+        await cardFieldsInstance.submit({});
+      }catch(e){ showCheckout(e?.message || String(e)); }
+    });
+
+    // Balance actions
+    function fmt(n){ return typeof n === 'number' ? n.toFixed(2) : n; }
+    function renderTxList(data){
+      const list = data?.transaction_details || [];
+      const html = ['<div class="muted">Most recent transactions</div>']
+        .concat(list.slice(0,10).map(t=>{
+          const info = t.transaction_info || {}; const payer = t.payer_info || {}; const amt = info.transaction_amount || {}; 
+          return `<div style="padding:8px;border:1px solid #223; border-radius:8px; margin-top:8px">`
+            + `<div><b>${info.transaction_event_code||''}</b> — ${amt.value||''} ${amt.currency_code||''}</div>`
+            + `<div class="muted">${info.transaction_initiation_date||''} — ${payer.email_address||''}</div>`
+            + `</div>`;
+        }));
+      document.getElementById('tx-list').innerHTML = html.join('');
+    }
+
+    document.getElementById('get-current').addEventListener('click', async ()=>{
+      const clientId = document.getElementById('clientId').value.trim();
+      const clientSecret = document.getElementById('clientSecret').value.trim();
+      const env = document.getElementById('env').value;
+      try{
+        const data = await post('/api/balance/current', { clientId, clientSecret, env });
+        if (data?.balances) {
+          const primary = (data.balances||[]).find(b=>b.primary) || data.balances[0];
+          const val = primary?.total_balance?.value || primary?.available_balance?.value || '0.00';
+          const cur = primary?.total_balance?.currency_code || primary?.currency_code || 'USD';
+          document.getElementById('current-balance').textContent = `Current balance: ${val} ${cur}`;
+        } else if (data?.balance) {
+          document.getElementById('current-balance').textContent = `Derived balance: ${data.balance} ${data.currency||'USD'}`;
+        } else {
+          document.getElementById('current-balance').textContent = JSON.stringify(data);
+        }
+      }catch(e){ document.getElementById('current-balance').textContent = e.message; }
+    });
+
+    document.getElementById('list-tx').addEventListener('click', async ()=>{
+      const clientId = document.getElementById('clientId').value.trim();
+      const clientSecret = document.getElementById('clientSecret').value.trim();
+      const env = document.getElementById('env').value;
+      const days = document.getElementById('days').value;
+      try{
+        const data = await post('/api/balance/transactions', { clientId, clientSecret, env, days });
+        renderTxList(data);
+      }catch(e){ document.getElementById('tx-list').textContent = e.message; }
+    });
+  </script>
+</body>
+</html>
+
+
