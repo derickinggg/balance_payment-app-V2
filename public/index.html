@@ -222,6 +222,7 @@
           pr.avs_code ? `AVS ${pr.avs_code}` : '',
           pr.cvv_code ? `CVV ${pr.cvv_code}` : '',
         ].filter(Boolean).join(' · ');
+        const reason = humanReadableReason({ declineCode, declineMsg, pr, statusDetails });
 
         mount.innerHTML = `
           <div class="result-card">
@@ -237,9 +238,7 @@
               <label>Expiry</label><div>${expiry}</div>
               <label>Issuing Bank</label><div>${bank}</div>
               <label>Country</label><div>${country}</div>
-              ${isDeclined ? `<label>Decline Code</label><div>${escapeHtml(declineCode || 'N/A')}</div>` : ''}
-              ${isDeclined && declineMsg ? `<label>Reason</label><div>${escapeHtml(declineMsg)}</div>` : ''}
-              ${isDeclined && processorMeta ? `<label>Processor</label><div>${escapeHtml(processorMeta)}</div>` : ''}
+              ${isDeclined ? `<label>Reason</label><div>${escapeHtml(reason)}</div>` : ''}
             </div>
             <details class="raw">
               <summary>View raw response</summary>
@@ -254,6 +253,37 @@
 
     function escapeHtml(s){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+    }
+
+    function humanReadableReason({ declineCode, declineMsg, pr, statusDetails }){
+      const code = String(declineCode || '').toUpperCase();
+      const msg = String(declineMsg || '').trim();
+      const avs = (pr && pr.avs_code) ? ` · AVS ${pr.avs_code}` : '';
+      const cvv = (pr && pr.cvv_code) ? ` · CVV ${pr.cvv_code}` : '';
+      const sd = String(statusDetails?.reason || '').toUpperCase();
+
+      const codeMap = {
+        'PAYER_CANNOT_PAY': 'Issuer declined the transaction',
+        'PAYER_ACCOUNT_RESTRICTED': 'Payer account is restricted',
+        'PAYER_CANNOT_PAY_THIS_MERCHANT': 'Issuer declined merchant',
+        'INSTRUMENT_DECLINED': 'Card was declined by issuer',
+        'EXPIRED_CARD': 'Card is expired',
+        'INSUFFICIENT_FUNDS': 'Insufficient funds',
+        'FRAUD_DECLINE': 'Issuer suspected fraud',
+        'CVV_CHECK_FAILED': 'Incorrect security code',
+        'AVS_CHECK_FAILED': 'Address verification failed',
+        'DECLINED': 'Issuer declined',
+        '5100': 'Issuer decline',
+        '5101': 'Insufficient funds',
+        '5102': 'Invalid card number',
+        '5103': 'Invalid expiry',
+        '5104': 'Incorrect CVV',
+      };
+
+      if (msg) return `${msg}${avs}${cvv}`;
+      if (sd && codeMap[sd]) return `${codeMap[sd]}${avs}${cvv}`;
+      if (code && codeMap[code]) return `${codeMap[code]}${avs}${cvv}`;
+      return `Transaction was declined by issuer${avs || ''}${cvv || ''}`;
     }
 
     async function loadSDK(clientId, currency='USD', clientToken){
