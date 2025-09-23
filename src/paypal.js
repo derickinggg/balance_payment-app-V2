@@ -79,14 +79,30 @@ export async function captureOrderServer(orderId, { clientId, clientSecret, env 
   return { status: response.status, json };
 }
 
+function formatReportingDate(date) {
+  const pad = (v) => String(v).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  const offsetMinutes = -date.getTimezoneOffset();
+  const offsetSign = offsetMinutes >= 0 ? '+' : '-';
+  const absOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = pad(Math.floor(absOffsetMinutes / 60));
+  const offsetRemainingMinutes = pad(absOffsetMinutes % 60);
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${offsetHours}${offsetRemainingMinutes}`;
+}
+
 export async function fetchTransactions({ clientId, clientSecret, env, startDate, endDate, page_size = 100, days = 31 } = {}) {
   const base = baseForEnv(env);
   const accessToken = await generateAccessToken({ clientId, clientSecret, env });
   const now = new Date();
   const lookbackDays = Math.max(1, Math.min(31, Number(days) || 31));
   const past = new Date(now.getTime() - lookbackDays*24*60*60*1000);
-  const start = (startDate || past.toISOString());
-  const end = (endDate || now.toISOString());
+  const start = (startDate || formatReportingDate(past));
+  const end = (endDate || formatReportingDate(now));
   const params = new URLSearchParams();
   params.set('start_date', start);
   params.set('end_date', end);
@@ -104,7 +120,7 @@ export async function fetchTransactions({ clientId, clientSecret, env, startDate
 export async function fetchCurrentBalance({ clientId, clientSecret, env } = {}) {
   const base = baseForEnv(env);
   const accessToken = await generateAccessToken({ clientId, clientSecret, env });
-  const asOf = new Date().toISOString();
+  const asOf = formatReportingDate(new Date());
   const response = await fetch(`${base}/v1/reporting/balances?as_of_time=${encodeURIComponent(asOf)}`, {
     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }
   });
