@@ -3,98 +3,522 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050915" />
   <title>PayPal Advanced Checkout + Balance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#0b1020;color:#e8edff}
-    .wrap{max-width:960px;margin:30px auto;padding:20px}
-    .tabs{display:flex;gap:6px;margin-bottom:12px}
-    .tab{padding:10px 14px;border-radius:10px;background:#0e1430;border:1px solid #233056;cursor:pointer}
-    .tab.active{background:#16234a;border-color:#345}
-    .panel{background:#111735;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-    input,select{width:100%;padding:10px;border-radius:10px;border:1px solid #2a3357;background:#0e1430;color:#dfe6ff}
-    label{font-size:12px;opacity:.9}
-    .row{display:flex;gap:12px}
-    .row>div{flex:1}
-    button{background:#2563eb;border:0;color:#fff;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:600}
-    .muted{opacity:.7;font-size:12px}
-    #result{white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;background:#0a0f24;padding:12px;border-radius:10px;margin-top:16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    :root {
+      color-scheme: dark;
+      --bg: radial-gradient(circle at top left, #182a61 0%, #0c1535 32%, #050915 78%);
+      --surface: rgba(12, 20, 46, 0.78);
+      --surface-strong: rgba(19, 28, 62, 0.86);
+      --border: rgba(110, 133, 190, 0.26);
+      --border-strong: rgba(148, 163, 210, 0.55);
+      --text: #f8fbff;
+      --muted: rgba(194, 208, 255, 0.72);
+      --primary: #6c7ff8;
+      --primary-strong: #4452ff;
+      --accent: #22d3ee;
+      --shadow: 0 30px 70px rgba(4, 9, 25, 0.65);
+      --radius-lg: 26px;
+      --radius-sm: 14px;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: clamp(24px, 4vw, 64px) 16px 96px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(76, 92, 255, 0.15), rgba(34, 211, 238, 0.05));
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .app-shell {
+      position: relative;
+      width: min(1100px, 96vw);
+      display: grid;
+      gap: clamp(24px, 3vw, 36px);
+      z-index: 1;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: clamp(24px, 3vw, 36px);
+      box-shadow: var(--shadow);
+      backdrop-filter: saturate(140%) blur(28px);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(69, 83, 207, 0.45), rgba(9, 15, 45, 0.8));
+      border: 1px solid rgba(119, 141, 255, 0.4);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(88, 147, 255, 0.3), transparent 55%);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.9);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0 0 16px;
+      font-size: clamp(32px, 5vw, 42px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 580px;
+      color: rgba(226, 232, 255, 0.82);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .credentials-card h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .credentials-card p {
+      margin: 6px 0 24px;
+      color: var(--muted);
+      max-width: 620px;
+      line-height: 1.6;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .field-grid.three {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    label {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(225, 232, 255, 0.65);
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 52px;
+      background: rgba(9, 16, 38, 0.88);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(132, 158, 241, 0.22);
+      color: #e7ecff;
+      padding: 12px 16px;
+      font-size: 15px;
+      transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    input::placeholder,
+    select::placeholder {
+      color: rgba(153, 176, 225, 0.6);
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: rgba(112, 131, 255, 0.65);
+      box-shadow: 0 0 0 3px rgba(86, 113, 255, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .tab-card {
+      display: grid;
+      gap: 12px;
+      padding: clamp(18px, 3vw, 28px) clamp(20px, 3vw, 30px);
+      background: var(--surface-strong);
+    }
+
+    .tabs {
+      display: inline-flex;
+      gap: 10px;
+      background: rgba(9, 15, 37, 0.6);
+      padding: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(105, 128, 205, 0.35);
+      width: fit-content;
+    }
+
+    .tab {
+      position: relative;
+      border: none;
+      background: transparent;
+      color: rgba(210, 220, 255, 0.78);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      padding: 10px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(95, 117, 255, 0.9), rgba(34, 211, 238, 0.75));
+      box-shadow: 0 10px 28px rgba(57, 92, 255, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .tab:hover {
+      color: #fff;
+    }
+
+    .tab-card p {
+      margin: 0;
+      color: rgba(201, 216, 255, 0.7);
+      font-size: 14px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 20px;
+    }
+
+    .panel h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .panel > p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+    }
+
+    .field-row .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    button {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+      color: #fff;
+      box-shadow: 0 20px 40px rgba(76, 90, 255, 0.35);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+    }
+
+    button:active {
+      transform: translateY(0);
+      filter: brightness(0.95);
+    }
+
+    button.secondary {
+      background: rgba(152, 175, 255, 0.14);
+      color: rgba(224, 234, 255, 0.92);
+      border: 1px solid rgba(135, 156, 235, 0.45);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      box-shadow: 0 14px 32px rgba(36, 60, 126, 0.45);
+    }
+
+    .card-fields {
+      display: grid;
+      gap: 16px;
+    }
+
+    .card-fields-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .card-field,
+    #card-name-field,
+    #card-number-field,
+    #card-expiry-field,
+    #card-cvv-field {
+      border-radius: var(--radius-sm);
+      background: rgba(10, 17, 41, 0.9);
+      border: 1px dashed rgba(129, 150, 225, 0.4);
+      min-height: 56px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-card {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(102, 133, 219, 0.35);
+      padding: 22px;
+      background: rgba(7, 13, 34, 0.72);
+      display: grid;
+      gap: 12px;
+    }
+
+    .status-card h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-output {
+      margin: 0;
+      background: rgba(3, 8, 24, 0.75);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(99, 128, 211, 0.32);
+      padding: 16px;
+      min-height: 140px;
+      font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(224, 233, 255, 0.92);
+      white-space: pre-wrap;
+    }
+
+    .balance-highlight {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .balance-value {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #fdfcff;
+    }
+
+    .transaction-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .transaction-entry {
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(109, 135, 214, 0.28);
+      padding: 18px;
+      background: rgba(9, 14, 34, 0.72);
+      display: grid;
+      gap: 8px;
+    }
+
+    .transaction-entry__top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 600;
+      color: rgba(229, 236, 255, 0.94);
+    }
+
+    .transaction-entry__meta {
+      font-size: 13px;
+      color: rgba(199, 213, 255, 0.7);
+    }
+
+    .placeholder {
+      color: rgba(186, 202, 245, 0.7);
+      font-size: 14px;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding-bottom: 72px;
+      }
+
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .card-fields-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .tab {
+        flex: 1;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>PayPal Tools</h2>
-    <p class="muted">Paste your PayPal app credentials below. Credentials are only used for your requests.</p>
+  <div class="app-shell">
+    <section class="card hero">
+      <div class="hero__badge">PayPal Developer Toolkit</div>
+      <h1>Unified PayPal Toolkit</h1>
+      <p>Validate advanced card checkout, capture live responses, and monitor account balances without leaving this modern workspace.</p>
+    </section>
 
-    <div class="panel" style="margin-bottom:12px">
-      <div class="row">
+    <section class="card credentials-card">
+      <h2>API Credentials</h2>
+      <p>Your credentials stay in your browser only. Switch between sandbox and live environments at any time.</p>
+      <div class="field-grid three">
         <div>
-          <label>Environment</label>
+          <label for="env">Environment</label>
           <select id="env">
             <option value="sandbox">Sandbox</option>
             <option value="live">Live</option>
           </select>
         </div>
         <div>
-          <label>PayPal Client ID</label>
-          <input id="clientId" placeholder="A..." />
+          <label for="clientId">PayPal Client ID</label>
+          <input id="clientId" placeholder="A..." autocomplete="off" />
         </div>
         <div>
-          <label>PayPal Client Secret</label>
-          <input id="clientSecret" placeholder="E..." />
+          <label for="clientSecret">PayPal Client Secret</label>
+          <input id="clientSecret" placeholder="E..." autocomplete="off" />
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="tabs">
-      <div class="tab active" data-tab="checkout">Checkout</div>
-      <div class="tab" data-tab="balance">Balance</div>
-    </div>
+    <section class="card tab-card">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="checkout">Advanced Checkout</button>
+        <button type="button" class="tab" data-tab="balance">Balance Insights</button>
+      </div>
+      <p>Toggle between validating the PayPal Advanced Card Fields experience and exploring your account balances.</p>
+    </section>
 
-    <div id="checkout" class="panel">
-      <div class="row">
-        <div>
-          <label>Amount</label>
+    <section id="checkout" class="card panel">
+      <div>
+        <h3>Advanced Card Fields</h3>
+        <p>Connect with your client credentials, load the SDK, and capture a card authorization in seconds.</p>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="amount">Amount</label>
           <input id="amount" value="1.00" />
         </div>
-        <div style="align-self:flex-end">
-          <button id="validate">Validate API</button>
-        </div>
+        <button id="validate" type="button">Validate API</button>
       </div>
 
-      <div style="margin-top:16px">
+      <div class="card-fields">
         <div id="card-name-field"></div>
-        <div id="card-number-field" style="margin-top:12px"></div>
-        <div class="row" style="margin-top:12px">
+        <div id="card-number-field"></div>
+        <div class="card-fields-grid">
           <div id="card-expiry-field"></div>
           <div id="card-cvv-field"></div>
         </div>
-        <button id="pay" style="margin-top:12px">Pay</button>
+        <button id="pay" type="button">Collect Payment</button>
       </div>
-      <div id="checkout-result" style="margin-top:12px"></div>
-    </div>
 
-    <div id="balance" class="panel" style="display:none">
-      <div class="row">
+      <div class="status-card">
         <div>
-          <label>Lookback days</label>
+          <h4>Checkout Response</h4>
+          <p class="muted">Realtime events from client token validation, order creation, and capture appear below.</p>
+        </div>
+        <pre id="checkout-result" class="status-output">Awaiting validation...</pre>
+      </div>
+    </section>
+
+    <section id="balance" class="card panel" style="display:none">
+      <div>
+        <h3>Balance &amp; Transactions</h3>
+        <p>Quickly check available funds or retrieve the latest settlement activity from the selected environment.</p>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="days">Lookback Days</label>
           <input id="days" value="7" />
         </div>
-        <div style="align-self:flex-end" class="row">
-          <button id="get-current">Get Current Balance</button>
-          <button id="list-tx">List Recent Transactions</button>
+        <div class="field" style="gap: 12px;">
+          <button id="get-current" type="button" class="secondary">Get Current Balance</button>
+          <button id="list-tx" type="button">List Recent Transactions</button>
         </div>
       </div>
-      <div class="grid" style="margin-top:12px">
-        <div>
-          <div id="current-balance" class="muted"></div>
-        </div>
-        <div style="grid-column:1/-1">
-          <div id="tx-list"></div>
-        </div>
-      </div>
-    </div>
 
+      <div class="status-card balance-highlight">
+        <div>
+          <h4>Current Balance</h4>
+          <p class="muted">Displays the primary balance returned by PayPal.</p>
+        </div>
+        <div id="current-balance" class="balance-value">Balance details will appear here.</div>
+      </div>
+
+      <div class="status-card">
+        <div>
+          <h4>Recent Transactions</h4>
+          <p class="muted">The ten latest transactions are listed once retrieved.</p>
+        </div>
+        <div id="tx-list" class="transaction-list">
+          <p class="placeholder">Transaction insights will populate after you request them.</p>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -102,61 +526,76 @@
     let clientToken = null;
 
     // Persist credentials locally for convenience (not secure; for demo only)
-    function persistCreds(){
-      try{
+    function persistCreds() {
+      try {
         localStorage.setItem('pp_env', document.getElementById('env').value);
         localStorage.setItem('pp_clientId', document.getElementById('clientId').value.trim());
         localStorage.setItem('pp_clientSecret', document.getElementById('clientSecret').value.trim());
-      }catch(_){/* ignore */}
+      } catch (_) {
+        /* ignore */
+      }
     }
-    function restoreCreds(){
-      try{
+    function restoreCreds() {
+      try {
         const env = localStorage.getItem('pp_env');
         const id = localStorage.getItem('pp_clientId');
         const sec = localStorage.getItem('pp_clientSecret');
-        if(env) document.getElementById('env').value = env;
-        if(id) document.getElementById('clientId').value = id;
-        if(sec) document.getElementById('clientSecret').value = sec;
-      }catch(_){/* ignore */}
+        if (env) document.getElementById('env').value = env;
+        if (id) document.getElementById('clientId').value = id;
+        if (sec) document.getElementById('clientSecret').value = sec;
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     // Restore credentials on load
     restoreCreds();
 
-    function tabTo(name){
-      document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
-      document.getElementById('checkout').style.display = name==='checkout' ? '' : 'none';
-      document.getElementById('balance').style.display = name==='balance' ? '' : 'none';
+    function tabTo(name) {
+      document
+        .querySelectorAll('.tab')
+        .forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+      document.getElementById('checkout').style.display = name === 'checkout' ? '' : 'none';
+      document.getElementById('balance').style.display = name === 'balance' ? '' : 'none';
     }
-    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>tabTo(t.dataset.tab)));
+    document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => tabTo(t.dataset.tab)));
 
-    async function post(url, body){
-      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+    async function post(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      });
       const data = await res.json();
-      if(!res.ok) throw new Error(data?.error || JSON.stringify(data));
+      if (!res.ok) throw new Error(data?.error || JSON.stringify(data));
       return data;
     }
 
-    function showCheckout(obj){
-      document.getElementById('checkout-result').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj,null,2);
+    function showCheckout(obj) {
+      document.getElementById('checkout-result').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
     }
 
-    async function loadSDK(clientId, currency='USD', clientToken){
+    async function loadSDK(clientId, currency = 'USD', clientToken) {
       const existing = document.getElementById('pp-sdk');
-      if(existing) existing.remove();
-      await new Promise((resolve)=>{
+      if (existing) existing.remove();
+      await new Promise((resolve) => {
         const s = document.createElement('script');
         s.id = 'pp-sdk';
-        s.src = `https://www.paypal.com/sdk/js?components=card-fields&client-id=${encodeURIComponent(clientId)}&currency=${currency}&intent=capture&commit=true`;
+        s.src = `https://www.paypal.com/sdk/js?components=card-fields&client-id=${encodeURIComponent(
+          clientId,
+        )}&currency=${currency}&intent=capture&commit=true`;
         if (clientToken) s.setAttribute('data-client-token', clientToken);
-        s.onload = ()=> resolve();
-        s.onerror = ()=> resolve();
+        s.onload = () => resolve();
+        s.onerror = () => resolve();
         document.head.appendChild(s);
       });
     }
 
-    async function renderCardFields(){
-      if(!window.paypal || !paypal.CardFields){ showCheckout('SDK not loaded'); return; }
+    async function renderCardFields() {
+      if (!window.paypal || !paypal.CardFields) {
+        showCheckout('SDK not loaded');
+        return;
+      }
       cardFieldsInstance = paypal.CardFields({
         createOrder: async () => {
           const amount = document.getElementById('amount').value || '1.00';
@@ -173,7 +612,7 @@
           const capture = await post(`/api/orders/${data.orderID}/capture`, { clientId, clientSecret, env });
           showCheckout(capture);
         },
-        onError: (err)=> showCheckout(err?.message || String(err)),
+        onError: (err) => showCheckout(err?.message || String(err)),
       });
       cardFieldsInstance.NameField().render('#card-name-field');
       cardFieldsInstance.NumberField().render('#card-number-field');
@@ -186,76 +625,101 @@
     document.getElementById('clientId').addEventListener('input', persistCreds);
     document.getElementById('clientSecret').addEventListener('input', persistCreds);
 
-    document.getElementById('validate').addEventListener('click', async ()=>{
-      try{
+    document.getElementById('validate').addEventListener('click', async () => {
+      try {
         const clientId = document.getElementById('clientId').value.trim();
         const clientSecret = document.getElementById('clientSecret').value.trim();
         const env = document.getElementById('env').value;
         persistCreds();
-        if(!clientId || !clientSecret){ showCheckout('Enter Client ID and Secret'); return; }
+        if (!clientId || !clientSecret) {
+          showCheckout('Enter Client ID and Secret');
+          return;
+        }
         const token = await post('/api/client-token', { clientId, clientSecret, env });
         clientToken = token.client_token;
         await loadSDK(clientId, 'USD', clientToken);
         showCheckout('Validated. SDK loaded.');
         await renderCardFields();
-      }catch(e){ showCheckout(e.message); }
+      } catch (e) {
+        showCheckout(e.message);
+      }
     });
 
-    document.getElementById('pay').addEventListener('click', async ()=>{
-      try{
-        if(!cardFieldsInstance){ showCheckout('Validate first to render fields.'); return; }
+    document.getElementById('pay').addEventListener('click', async () => {
+      try {
+        if (!cardFieldsInstance) {
+          showCheckout('Validate first to render fields.');
+          return;
+        }
         await cardFieldsInstance.submit({});
-      }catch(e){ showCheckout(e?.message || String(e)); }
+      } catch (e) {
+        showCheckout(e?.message || String(e));
+      }
     });
 
     // Balance actions
-    function fmt(n){ return typeof n === 'number' ? n.toFixed(2) : n; }
-    function renderTxList(data){
+    function fmt(n) {
+      return typeof n === 'number' ? n.toFixed(2) : n;
+    }
+    function renderTxList(data) {
       const list = data?.transaction_details || [];
-      const html = ['<div class="muted">Most recent transactions</div>']
-        .concat(list.slice(0,10).map(t=>{
-          const info = t.transaction_info || {}; const payer = t.payer_info || {}; const amt = info.transaction_amount || {}; 
-          return `<div style="padding:8px;border:1px solid #223; border-radius:8px; margin-top:8px">`
-            + `<div><b>${info.transaction_event_code||''}</b> — ${amt.value||''} ${amt.currency_code||''}</div>`
-            + `<div class="muted">${info.transaction_initiation_date||''} — ${payer.email_address||''}</div>`
-            + `</div>`;
-        }));
+      if (!list.length) {
+        document.getElementById('tx-list').innerHTML = '<p class="placeholder">No transactions returned for the selected window.</p>';
+        return;
+      }
+      const html = ['<div class="muted">Most recent transactions</div>'].concat(
+        list.slice(0, 10).map((t) => {
+          const info = t.transaction_info || {};
+          const payer = t.payer_info || {};
+          const amt = info.transaction_amount || {};
+          return `\
+<div class="transaction-entry">\
+  <div class="transaction-entry__top">\
+    <span>${info.transaction_event_code || ''}</span>\
+    <span>${amt.value || ''} ${amt.currency_code || ''}</span>\
+  </div>\
+  <div class="transaction-entry__meta">${info.transaction_initiation_date || ''} — ${payer.email_address || ''}</div>\
+</div>`;
+        }),
+      );
       document.getElementById('tx-list').innerHTML = html.join('');
     }
 
-    document.getElementById('get-current').addEventListener('click', async ()=>{
+    document.getElementById('get-current').addEventListener('click', async () => {
       const clientId = document.getElementById('clientId').value.trim();
       const clientSecret = document.getElementById('clientSecret').value.trim();
       const env = document.getElementById('env').value;
       persistCreds();
-      try{
+      try {
         const data = await post('/api/balance/current', { clientId, clientSecret, env });
         if (data?.balances) {
-          const primary = (data.balances||[]).find(b=>b.primary) || data.balances[0];
-          const val = primary?.total_balance?.value || primary?.available_balance?.value || '0.00';
+          const primary = (data.balances || []).find((b) => b.primary) || data.balances[0];
+          const val = fmt(primary?.total_balance?.value || primary?.available_balance?.value || '0.00');
           const cur = primary?.total_balance?.currency_code || primary?.currency_code || 'USD';
           document.getElementById('current-balance').textContent = `Current balance: ${val} ${cur}`;
         } else if (data?.balance) {
-          document.getElementById('current-balance').textContent = `Derived balance: ${data.balance} ${data.currency||'USD'}`;
+          document.getElementById('current-balance').textContent = `Derived balance: ${data.balance} ${data.currency || 'USD'}`;
         } else {
           document.getElementById('current-balance').textContent = JSON.stringify(data);
         }
-      }catch(e){ document.getElementById('current-balance').textContent = e.message; }
+      } catch (e) {
+        document.getElementById('current-balance').textContent = e.message;
+      }
     });
 
-    document.getElementById('list-tx').addEventListener('click', async ()=>{
+    document.getElementById('list-tx').addEventListener('click', async () => {
       const clientId = document.getElementById('clientId').value.trim();
       const clientSecret = document.getElementById('clientSecret').value.trim();
       const env = document.getElementById('env').value;
       const days = document.getElementById('days').value;
       persistCreds();
-      try{
+      try {
         const data = await post('/api/balance/transactions', { clientId, clientSecret, env, days });
         renderTxList(data);
-      }catch(e){ document.getElementById('tx-list').textContent = e.message; }
+      } catch (e) {
+        document.getElementById('tx-list').textContent = e.message;
+      }
     });
   </script>
 </body>
 </html>
-
-
