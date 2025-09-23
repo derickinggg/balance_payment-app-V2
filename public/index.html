@@ -27,8 +27,8 @@
     .amount,.tab,button,input,select{font-feature-settings:'cv05' 1,'tnum' 1,'ss01' 1}
     /* Transaction list monospace for amounts */
     .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:600}
-    .tx-credit{color:#22c55e}
-    .tx-debit{color:#ef4444}
+    .tx-credit{color:#ffffff}
+    .tx-debit{color:#ffffff}
     /* Current balance amount emphasis */
     #current-balance .tx-amount{font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;font-weight:700;font-size:16px;opacity:1}
     /* Section title */
@@ -244,7 +244,7 @@
         const code = info.transaction_event_code || '';
         const isCredit = (code === 'T0006' || code === 'T0001');
         const cls = isCredit ? 'tx-amount tx-credit' : 'tx-amount tx-debit';
-        const sign = isCredit ? '+' : '-';
+        const sign = '';
         const value = typeof amt.value !== 'undefined' ? Number(amt.value).toFixed(2) : '';
         const currency = amt.currency_code || '';
         const title = isCredit ? 'Payment Received' : 'Transaction';
@@ -256,7 +256,7 @@
           +   `<div class="tx-meta">${when}</div>`
           +   `<div class="tx-meta tx-id">ID: ${id}</div>`
           + `</div>`
-          + `<div class="tx-right ${cls}">${sign}$${value}</div>`
+          + `<div class="tx-right ${cls}">$${value}</div>`
         + `</div>`;
       });
       document.getElementById('tx-list').innerHTML = html.join('');
