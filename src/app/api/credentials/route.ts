@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServer } from "@/src/lib/supabaseServer";
-import { encryptString, decryptString } from "@/src/lib/crypto";
+import { getSupabaseServer } from "@/lib/supabaseServer";
+import { encryptString } from "@/lib/crypto";
 import { z } from "zod";
-import { fetchBalances } from "@/src/lib/paypal";
+import { fetchBalances } from "@/lib/paypal";
 
 const bodySchema = z.object({
   label: z.string().min(1),
@@ -12,7 +12,7 @@ const bodySchema = z.object({
 });
 
 export async function GET() {
-  const supabase = getSupabaseServer();
+  const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
   if (!data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data: rows, error } = await supabase
@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = getSupabaseServer();
+  const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
   if (!data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     environment,
     enc_client_id: encId.ciphertext,
     enc_client_secret: encSecret.ciphertext,
-    enc_iv: encId.iv, -- same IV works independently since different plaintexts
+    enc_iv: encId.iv,
     enc_salt: encId.salt,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

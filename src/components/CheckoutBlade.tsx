@@ -2,8 +2,7 @@
 import { useEffect, useState } from "react";
 
 export default function CheckoutBlade() {
-  const [credentialId, setCredentialId] = useState<string>("
-");
+  const [credentialId, setCredentialId] = useState<string>("");
   const [amount, setAmount] = useState<string>("10.00");
   const [currency, setCurrency] = useState<string>("USD");
   const [desc, setDesc] = useState<string>("Test charge");

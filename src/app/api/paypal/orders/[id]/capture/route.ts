@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServer } from "@/src/lib/supabaseServer";
-import { decryptString } from "@/src/lib/crypto";
-import { captureOrder } from "@/src/lib/paypal";
+import { getSupabaseServer } from "@/lib/supabaseServer";
+import { decryptString } from "@/lib/crypto";
+import { captureOrder } from "@/lib/paypal";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = getSupabaseServer();
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
   if (!data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { credentialId } = await req.json();
   if (!credentialId) return NextResponse.json({ error: "Missing credentialId" }, { status: 400 });
+  const { id } = await context.params;
 
   const { data: rows, error } = await supabase
     .from("credentials")
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const clientSecret = await decryptString(rows.enc_client_secret, rows.enc_iv, rows.enc_salt);
   const result = await captureOrder(
     { clientId, clientSecret, environment: rows.environment },
-    params.id,
+    id,
   );
   return NextResponse.json({ result });
 }

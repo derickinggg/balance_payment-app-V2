@@ -1,7 +1,9 @@
 "use client";
 
-import { getSupabaseBrowser } from "@/src/lib/supabaseClient";
+import { getSupabaseBrowser } from "@/lib/supabaseClient";
 import { useState } from "react";
+
+export const dynamic = "force-dynamic";
 
 export default function AuthPage() {
   const supabase = getSupabaseBrowser();

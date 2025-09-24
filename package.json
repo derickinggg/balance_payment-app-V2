@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vercel:deploy": "vercel --prod"
   },
   "dependencies": {
     "@paypal/checkout-server-sdk": "^1.0.3",

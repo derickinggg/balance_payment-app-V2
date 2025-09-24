@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServer } from "@/src/lib/supabaseServer";
-import { decryptString } from "@/src/lib/crypto";
-import { createOrder } from "@/src/lib/paypal";
+import { getSupabaseServer } from "@/lib/supabaseServer";
+import { decryptString } from "@/lib/crypto";
+import { createOrder } from "@/lib/paypal";
 
 export async function POST(req: NextRequest) {
-  const supabase = getSupabaseServer();
+  const supabase = await getSupabaseServer();
   const { data } = await supabase.auth.getUser();
   if (!data.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { credentialId, amount, currency = "USD", description } = await req.json();

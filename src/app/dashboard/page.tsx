@@ -1,6 +1,6 @@
-import CredentialForm from "@/src/components/CredentialForm";
-import BalanceTable from "@/src/components/BalanceTable";
-import CheckoutBlade from "@/src/components/CheckoutBlade";
+import CredentialForm from "@/components/CredentialForm";
+import BalanceTable from "@/components/BalanceTable";
+import CheckoutBlade from "@/components/CheckoutBlade";
 
 export default async function DashboardPage() {
   return (
