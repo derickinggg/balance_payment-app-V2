@@ -5,17 +5,6 @@ const subtle = globalThis.crypto?.subtle ?? nodeWebcrypto.subtle;
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
 
-function getSecretMaterial(): CryptoKey {
-  const secret = process.env.ENCRYPTION_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("ENCRYPTION_SECRET must be set and at least 32 chars");
-  }
-  // Derive a key from the server-side secret using PBKDF2 as key material
-  // We return a promise-like CryptoKey via subtle.importKey
-  // However, to simplify, we pre-import synchronously by throwing on missing.
-  throw new Error("getSecretMaterial must be used via deriveAesKey");
-}
-
 export async function deriveAesKey(saltBase64?: string) {
   const secret = process.env.ENCRYPTION_SECRET!;
   const saltBytes = saltBase64 ? fromBase64(saltBase64) : nodeRandomBytes(16);
