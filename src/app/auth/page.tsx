@@ -6,7 +6,6 @@ import { useState } from "react";
 export const dynamic = "force-dynamic";
 
 export default function AuthPage() {
-  const supabase = getSupabaseBrowser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,6 +14,7 @@ export default function AuthPage() {
   async function signIn() {
     setLoading(true);
     setError(null);
+    const supabase = getSupabaseBrowser();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setError(error.message);
     setLoading(false);
@@ -24,6 +24,7 @@ export default function AuthPage() {
   async function signUp() {
     setLoading(true);
     setError(null);
+    const supabase = getSupabaseBrowser();
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) setError(error.message);
     setLoading(false);

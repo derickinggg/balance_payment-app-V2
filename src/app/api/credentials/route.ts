@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   // Validate by doing a lightweight balance call
   try {
     await fetchBalances({ clientId, clientSecret, environment });
-  } catch (e: any) {
+  } catch {
     return NextResponse.json({ error: "Invalid PayPal credentials" }, { status: 400 });
   }
 
